@@ -7,6 +7,8 @@ x-common-dns-settings: &common-dns
     - 8.8.4.4
 
 services:
+  # ======= INFRASTRUCTURE SERVICES =======
+  
   # Discovery Service
   eureka-server:
     build: ./eureka-server
@@ -55,7 +57,7 @@ services:
     build: ./api-gateway
     container_name: api-gateway
     ports:
-      - "8090:8090"
+      - "8080:8080"
     depends_on:
       eureka-server:
         condition: service_healthy
@@ -69,13 +71,56 @@ services:
       - SPRING_CLOUD_GATEWAY_DISCOVERY_LOCATOR_ENABLED=true
       - SPRING_CLOUD_GATEWAY_DISCOVERY_LOCATOR_LOWER-CASE-SERVICE-ID=true
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8090/actuator/health"]
+      test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
       interval: 30s
       timeout: 10s
       retries: 5
     networks:
       - andah-network
     <<: *common-dns
+
+  # ======= DATABASE SERVICES =======
+
+  # PostgreSQL for User/Station/Scooter Services
+  postgres-db:
+    image: postgres:14-alpine
+    container_name: postgres-db
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "postgres"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    networks:
+      - andah-network
+
+  # MySQL for Reservation Service
+  mysql-db:
+    image: mysql:8
+    container_name: mysql-db
+    environment:
+      - MYSQL_ROOT_PASSWORD=root
+      - MYSQL_DATABASE=reservationT
+      - MYSQL_USER=andah
+      - MYSQL_PASSWORD=andah
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-proot"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    networks:
+      - andah-network
 
   # MongoDB for Payment Service
   mongodb-payment-db:
@@ -97,6 +142,74 @@ services:
     networks:
       - andah-network
 
+  # ======= BUSINESS SERVICES =======
+
+  # User Service
+  user-service:
+    build: ./user-service
+    container_name: user-service
+    ports:
+      - "8083:8083"
+    depends_on:
+      eureka-server:
+        condition: service_healthy
+      postgres-db:
+        condition: service_healthy
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
+      # Enable Eureka client features
+      - EUREKA_CLIENT_REGISTER-WITH-EUREKA=true
+      - EUREKA_CLIENT_FETCH-REGISTRY=true
+      # PostgreSQL connection
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres-db:5432/postgres
+      - SPRING_DATASOURCE_USERNAME=postgres
+      - SPRING_DATASOURCE_PASSWORD=postgres
+      # Ensure instance is properly registered
+      - EUREKA_INSTANCE_PREFER-IP-ADDRESS=true
+      - EUREKA_INSTANCE_INSTANCE-ID=$${spring.application.name}:$${server.port}
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8083/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    networks:
+      - andah-network
+    <<: *common-dns
+  
+  # Station Service
+  station-service:
+    build: ./station-service
+    container_name: station-service
+    ports:
+      - "8084:8084"
+    depends_on:
+      eureka-server:
+        condition: service_healthy
+      postgres-db:
+        condition: service_healthy
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
+      # Enable Eureka client features
+      - EUREKA_CLIENT_REGISTER-WITH-EUREKA=true
+      - EUREKA_CLIENT_FETCH-REGISTRY=true
+      # PostgreSQL connection
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres-db:5432/postgres
+      - SPRING_DATASOURCE_USERNAME=postgres
+      - SPRING_DATASOURCE_PASSWORD=postgres
+      # Ensure instance is properly registered
+      - EUREKA_INSTANCE_PREFER-IP-ADDRESS=true
+      - EUREKA_INSTANCE_INSTANCE-ID=$${spring.application.name}:$${server.port}
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8084/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    networks:
+      - andah-network
+    <<: *common-dns
+  
   # Payment Service
   payment-service:
     build: ./payment-service
@@ -111,7 +224,7 @@ services:
     environment:
       - SPRING_PROFILES_ACTIVE=docker
       - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
-      # Make sure Eureka client features are enabled
+      # Enable Eureka client features
       - EUREKA_CLIENT_ENABLED=true
       - EUREKA_CLIENT_REGISTER-WITH-EUREKA=true
       - EUREKA_CLIENT_FETCH-REGISTRY=true
@@ -125,8 +238,76 @@ services:
       - SPRING_DATA_MONGODB_USERNAME=mongodb
       - SPRING_DATA_MONGODB_PASSWORD=mongodb
       - SPRING_DATA_MONGODB_AUTHENTICATION_DATABASE=admin
+      # Callback URLs for payments (replacing localhost)
+      - NOWPAYMENTS_IPN_CALLBACK_URL=http://payment-service:8085/api/crypto-transactions/nowpayments/ipn-callback
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8085/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    networks:
+      - andah-network
+    <<: *common-dns
+  
+  # Scooter Service
+  scooter-service:
+    build: ./scooter-service
+    container_name: scooter-service
+    ports:
+      - "8086:8086"
+    depends_on:
+      eureka-server:
+        condition: service_healthy
+      postgres-db:
+        condition: service_healthy
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
+      # Enable Eureka client features
+      - EUREKA_CLIENT_REGISTER-WITH-EUREKA=true
+      - EUREKA_CLIENT_FETCH-REGISTRY=true
+      # PostgreSQL connection
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres-db:5432/postgres
+      - SPRING_DATASOURCE_USERNAME=postgres
+      - SPRING_DATASOURCE_PASSWORD=postgres
+      # Ensure instance is properly registered
+      - EUREKA_INSTANCE_PREFER-IP-ADDRESS=true
+      - EUREKA_INSTANCE_INSTANCE-ID=$${spring.application.name}:$${server.port}
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8086/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    networks:
+      - andah-network
+    <<: *common-dns
+  
+  # Reservation Service
+  reservation-service:
+    build: ./reservation-service
+    container_name: reservation-service
+    ports:
+      - "8087:8087"
+    depends_on:
+      eureka-server:
+        condition: service_healthy
+      mysql-db:
+        condition: service_healthy
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
+      # Enable Eureka client features
+      - EUREKA_CLIENT_REGISTER-WITH-EUREKA=true
+      - EUREKA_CLIENT_FETCH-REGISTRY=true
+      # MySQL connection
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql-db:3306/reservationT?createDatabaseIfNotExist=true
+      - SPRING_DATASOURCE_USERNAME=root
+      - SPRING_DATASOURCE_PASSWORD=root
+      # Ensure instance is properly registered
+      - EUREKA_INSTANCE_PREFER-IP-ADDRESS=true
+      - EUREKA_INSTANCE_INSTANCE-ID=$${spring.application.name}:$${server.port}
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8087/actuator/health"]
       interval: 30s
       timeout: 10s
       retries: 5
@@ -139,4 +320,6 @@ networks:
     driver: bridge
 
 volumes:
+  postgres-data:
+  mysql-data:
   mongodb-payment-data:
