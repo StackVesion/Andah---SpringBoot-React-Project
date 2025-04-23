@@ -1,0 +1,142 @@
+version: '3.8'
+
+# Global DNS settings for all services to fix network connectivity issues
+x-common-dns-settings: &common-dns
+  dns:
+    - 8.8.8.8
+    - 8.8.4.4
+
+services:
+  # Discovery Service
+  eureka-server:
+    build: ./eureka-server
+    container_name: eureka-server
+    ports:
+      - "8761:8761"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      # Disable self-registration to prevent issues
+      - EUREKA_CLIENT_REGISTER-WITH-EUREKA=false
+      - EUREKA_CLIENT_FETCH-REGISTRY=false
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8761/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    networks:
+      - andah-network
+    <<: *common-dns
+
+  # Configuration Server
+  config-server:
+    build: ./config-server
+    container_name: config-server
+    ports:
+      - "8888:8888"
+    depends_on:
+      eureka-server:
+        condition: service_healthy
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
+    volumes:
+      - ./config-repo:/config-repo
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8888/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    networks:
+      - andah-network
+    <<: *common-dns
+
+  # API Gateway
+  api-gateway:
+    build: ./api-gateway
+    container_name: api-gateway
+    ports:
+      - "8090:8090"
+    depends_on:
+      eureka-server:
+        condition: service_healthy
+      config-server:
+        condition: service_healthy
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
+      - SPRING_CLOUD_CONFIG_URI=http://config-server:8888
+      # Explicitly enable API Gateway service discovery
+      - SPRING_CLOUD_GATEWAY_DISCOVERY_LOCATOR_ENABLED=true
+      - SPRING_CLOUD_GATEWAY_DISCOVERY_LOCATOR_LOWER-CASE-SERVICE-ID=true
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8090/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    networks:
+      - andah-network
+    <<: *common-dns
+
+  # MongoDB for Payment Service
+  mongodb-payment-db:
+    image: mongo:6.0
+    container_name: mongodb-payment-db
+    environment:
+      - MONGO_INITDB_DATABASE=andah_payments
+      - MONGO_INITDB_ROOT_USERNAME=mongodb
+      - MONGO_INITDB_ROOT_PASSWORD=mongodb
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb-payment-data:/data/db
+    healthcheck:
+      test: ["CMD", "mongo", "--eval", "db.adminCommand('ping')"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    networks:
+      - andah-network
+
+  # Payment Service
+  payment-service:
+    build: ./payment-service
+    container_name: payment-service
+    ports:
+      - "8085:8085"
+    depends_on:
+      eureka-server:
+        condition: service_healthy
+      mongodb-payment-db:
+        condition: service_healthy
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
+      # Make sure Eureka client features are enabled
+      - EUREKA_CLIENT_ENABLED=true
+      - EUREKA_CLIENT_REGISTER-WITH-EUREKA=true
+      - EUREKA_CLIENT_FETCH-REGISTRY=true
+      # Ensure instance is properly registered
+      - EUREKA_INSTANCE_PREFER-IP-ADDRESS=true
+      - EUREKA_INSTANCE_INSTANCE-ID=$${spring.application.name}:$${server.port}
+      # MongoDB connection
+      - SPRING_DATA_MONGODB_HOST=mongodb-payment-db
+      - SPRING_DATA_MONGODB_PORT=27017
+      - SPRING_DATA_MONGODB_DATABASE=andah_payments
+      - SPRING_DATA_MONGODB_USERNAME=mongodb
+      - SPRING_DATA_MONGODB_PASSWORD=mongodb
+      - SPRING_DATA_MONGODB_AUTHENTICATION_DATABASE=admin
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8085/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    networks:
+      - andah-network
+    <<: *common-dns
+
+networks:
+  andah-network:
+    driver: bridge
+
+volumes:
+  mongodb-payment-data:

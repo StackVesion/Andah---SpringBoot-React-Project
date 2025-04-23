@@ -1,0 +1,3 @@
+com\andah\scooterservice\dto\UserDto.class
+com\andah\scooterservice\client\UserServiceClient.class
+com\andah\scooterservice\ScooterServiceApplication.class

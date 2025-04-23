@@ -1,0 +1,976 @@
+{
+  "info": {
+    "_postman_id": "7ea59e2f-b10a-4b8c-8cb6-af9cb8b2ad6d",
+    "name": "Andah Payment Service Local",
+    "description": "Comprehensive collection for testing the Andah Payment Service locally",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Payment Endpoints",
+      "item": [
+        {
+          "name": "Create Payment",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"userId\": 1,\n    \"amount\": 25.99,\n    \"paymentMethod\": \"CREDIT_CARD\",\n    \"reservationId\": 101,\n    \"cardTransactionId\": \"64a7f2e8d5b92b3a72c9f4e2\",\n    \"description\": \"Payment for reservation #101\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/payments",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "payments"
+              ]
+            },
+            "description": "Create a new payment transaction"
+          },
+          "response": []
+        },
+        {
+          "name": "Get All Payments",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/payments",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "payments"
+              ]
+            },
+            "description": "Retrieve all payments"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Payment by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/payments/{{paymentId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "payments",
+                "{{paymentId}}"
+              ]
+            },
+            "description": "Retrieve a payment by its ID"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Payment with Details",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/payments/{{paymentId}}/details",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "payments",
+                "{{paymentId}}",
+                "details"
+              ]
+            },
+            "description": "Get detailed payment information including associated transactions"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Payments by User ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/payments/user/{{userId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "payments",
+                "user",
+                "{{userId}}"
+              ]
+            },
+            "description": "Retrieve all payments for a specific user"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Payments by Reservation ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/payments/reservation/{{reservationId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "payments",
+                "reservation",
+                "{{reservationId}}"
+              ]
+            },
+            "description": "Retrieve all payments for a specific reservation"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Payments by Status",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/payments/status/{{status}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "payments",
+                "status",
+                "{{status}}"
+              ]
+            },
+            "description": "Retrieve all payments with a specific status (PENDING, COMPLETED, FAILED, REFUNDED)"
+          },
+          "response": []
+        },
+        {
+          "name": "Update Payment Status (JSON)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"status\": \"COMPLETED\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/payments/{{paymentId}}/status",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "payments",
+                "{{paymentId}}",
+                "status"
+              ]
+            },
+            "description": "Update a payment's status using JSON body"
+          },
+          "response": []
+        },
+        {
+          "name": "Update Payment Status (Path)",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/payments/{{paymentId}}/status/COMPLETED",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "payments",
+                "{{paymentId}}",
+                "status",
+                "COMPLETED"
+              ]
+            },
+            "description": "Update a payment's status using path parameter"
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Payment",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/payments/{{paymentId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "payments",
+                "{{paymentId}}"
+              ]
+            },
+            "description": "Delete a payment by its ID"
+          },
+          "response": []
+        },
+        {
+          "name": "Refund Payment",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/payments/refund/{{paymentId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "payments",
+                "refund",
+                "{{paymentId}}"
+              ]
+            },
+            "description": "Process a refund for a payment"
+          },
+          "response": []
+        }
+      ],
+      "description": "Endpoints for managing payment transactions"
+    },
+    {
+      "name": "Card Transaction Endpoints",
+      "item": [
+        {
+          "name": "Create Card Transaction",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"userId\": 1,\n    \"amount\": 29.99,\n    \"cardNumber\": \"4242424242424242\",\n    \"cardHolderName\": \"John Doe\",\n    \"currency\": \"usd\",\n    \"description\": \"Payment for Andah services\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/card-transactions",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "card-transactions"
+              ]
+            },
+            "description": "Process a credit card payment using Stripe test token (internally uses tok_visa)"
+          },
+          "response": []
+        },
+        {
+          "name": "Get All Card Transactions",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/card-transactions",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "card-transactions"
+              ]
+            },
+            "description": "Retrieve all card transactions"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Card Transaction by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/card-transactions/{{cardTransactionId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "card-transactions",
+                "{{cardTransactionId}}"
+              ]
+            },
+            "description": "Retrieve a card transaction by its ID"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Card Transactions by User ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/card-transactions/user/{{userId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "card-transactions",
+                "user",
+                "{{userId}}"
+              ]
+            },
+            "description": "Retrieve all card transactions for a specific user"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Card Transactions by Payment ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/card-transactions/payment/{{paymentId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "card-transactions",
+                "payment",
+                "{{paymentId}}"
+              ]
+            },
+            "description": "Retrieve all card transactions associated with a specific payment"
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Card Transaction",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/card-transactions/{{cardTransactionId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "card-transactions",
+                "{{cardTransactionId}}"
+              ]
+            },
+            "description": "Delete a card transaction by its ID"
+          },
+          "response": []
+        }
+      ],
+      "description": "Endpoints for managing credit card transactions"
+    },
+    {
+      "name": "Crypto Transaction Endpoints",
+      "item": [
+        {
+          "name": "Create Crypto Transaction",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"userId\": 1,\n    \"priceAmount\": 29.99,\n    \"priceCurrency\": \"usd\",\n    \"payCurrency\": \"btc\",\n    \"paymentMethod\": \"CRYPTO\",\n    \"currency\": \"btc\",\n    \"reservationId\": 101,\n    \"description\": \"Payment for reservation\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/crypto-transactions",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "crypto-transactions"
+              ]
+            },
+            "description": "Process a cryptocurrency payment"
+          },
+          "response": []
+        },
+        {
+          "name": "Get All Crypto Transactions",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/crypto-transactions",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "crypto-transactions"
+              ]
+            },
+            "description": "Retrieve all crypto transactions"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Crypto Transaction by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/crypto-transactions/{{cryptoTransactionId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "crypto-transactions",
+                "{{cryptoTransactionId}}"
+              ]
+            },
+            "description": "Retrieve a crypto transaction by its ID"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Crypto Transactions by User ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/crypto-transactions/user/{{userId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "crypto-transactions",
+                "user",
+                "{{userId}}"
+              ]
+            },
+            "description": "Retrieve all crypto transactions for a specific user"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Crypto Transactions by Payment ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/crypto-transactions/payment/{{paymentId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "crypto-transactions",
+                "payment",
+                "{{paymentId}}"
+              ]
+            },
+            "description": "Retrieve all crypto transactions associated with a specific payment"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Crypto Payment Status",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/crypto-transactions/status/{{nowPaymentId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "crypto-transactions",
+                "status",
+                "{{nowPaymentId}}"
+              ]
+            },
+            "description": "Check the status of a crypto payment with NowPayments"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Crypto Transactions by Status",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/crypto-transactions/status/{{statusValue}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "crypto-transactions",
+                "status",
+                "{{statusValue}}"
+              ]
+            },
+            "description": "Retrieve all crypto transactions with a specific status"
+          },
+          "response": []
+        },
+        {
+          "name": "IPN Callback (Simulation)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"payment_id\": \"{{nowPaymentId}}\",\n    \"payment_status\": \"CONFIRMED\",\n    \"pay_address\": \"bitcoinAddress123\",\n    \"price_amount\": 29.99,\n    \"price_currency\": \"usd\",\n    \"pay_amount\": 0.00125,\n    \"pay_currency\": \"btc\",\n    \"order_id\": \"{{cryptoTransactionId}}\",\n    \"order_description\": \"Payment for reservation\",\n    \"ipn_callback_url\": \"http://localhost:8085/api/crypto-transactions/nowpayments/ipn-callback\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/crypto-transactions/nowpayments/ipn-callback",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "crypto-transactions",
+                "nowpayments",
+                "ipn-callback"
+              ]
+            },
+            "description": "Simulate a NowPayments IPN callback"
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Crypto Transaction",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/crypto-transactions/{{cryptoTransactionId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "crypto-transactions",
+                "{{cryptoTransactionId}}"
+              ]
+            },
+            "description": "Delete a crypto transaction by its ID"
+          },
+          "response": []
+        }
+      ],
+      "description": "Endpoints for managing cryptocurrency transactions"
+    },
+    {
+      "name": "Wallet Endpoints",
+      "item": [
+        {
+          "name": "Create Wallet",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/wallets/{{userId}}/create",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "wallets",
+                "{{userId}}",
+                "create"
+              ]
+            },
+            "description": "Create a new wallet for a user with 0.0 balance"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Wallet by User ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/wallets/{{userId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "wallets",
+                "{{userId}}"
+              ]
+            },
+            "description": "Retrieve a wallet by user ID"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Wallet Balance",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/wallets/{{userId}}/balance",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "wallets",
+                "{{userId}}",
+                "balance"
+              ]
+            },
+            "description": "Get the current balance of a user's wallet"
+          },
+          "response": []
+        },
+        {
+          "name": "Recharge Wallet with Card",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"paymentMethod\": \"CREDIT_CARD\",\n    \"cardTransactionId\": \"{{cardTransactionId}}\",\n    \"amount\": 50.00\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/wallets/{{userId}}/recharge/card",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "wallets",
+                "{{userId}}",
+                "recharge",
+                "card"
+              ]
+            },
+            "description": "Recharge a wallet using a credit card payment"
+          },
+          "response": []
+        },
+        {
+          "name": "Recharge Wallet with Crypto",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"paymentMethod\": \"CRYPTO\",\n    \"cryptoTransactionId\": \"{{cryptoTransactionId}}\",\n    \"amount\": 50.00\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/wallets/{{userId}}/recharge/crypto",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "wallets",
+                "{{userId}}",
+                "recharge",
+                "crypto"
+              ]
+            },
+            "description": "Recharge a wallet using a cryptocurrency payment"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Wallet Transactions",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/wallets/{{userId}}/transactions",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "wallets",
+                "{{userId}}",
+                "transactions"
+              ]
+            },
+            "description": "Retrieve all transactions for a user's wallet"
+          },
+          "response": []
+        },
+        {
+          "name": "Pay with Wallet",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"reservationId\": 101,\n    \"scooterId\": 201,\n    \"description\": \"Payment for reservation\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/wallets/{{userId}}/pay?amount=25.99",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "wallets",
+                "{{userId}}",
+                "pay"
+              ],
+              "query": [
+                {
+                  "key": "amount",
+                  "value": "25.99"
+                }
+              ]
+            },
+            "description": "Make a payment using a user's wallet balance"
+          },
+          "response": []
+        },
+        {
+          "name": "Withdraw from Wallet",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"amount\": 15.00,\n    \"description\": \"User withdrawal request\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/wallets/{{userId}}/withdraw",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "wallets",
+                "{{userId}}",
+                "withdraw"
+              ]
+            },
+            "description": "Withdraw money from a user's wallet"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Deposit History",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/wallets/{{userId}}/deposits",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "wallets",
+                "{{userId}}",
+                "deposits"
+              ]
+            },
+            "description": "Retrieve all deposit transactions for a user's wallet"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Withdrawal History",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/wallets/{{userId}}/withdrawals",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "wallets",
+                "{{userId}}",
+                "withdrawals"
+              ]
+            },
+            "description": "Retrieve all withdrawal transactions for a user's wallet"
+          },
+          "response": []
+        },
+        {
+          "name": "Get All Withdrawals (Admin)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/wallets/transactions/withdrawals",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "wallets",
+                "transactions",
+                "withdrawals"
+              ]
+            },
+            "description": "Retrieve all withdrawal transactions across all wallets (admin endpoint)"
+          },
+          "response": []
+        },
+        {
+          "name": "Get All Deposits (Admin)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/wallets/transactions/deposits",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "wallets",
+                "transactions",
+                "deposits"
+              ]
+            },
+            "description": "Retrieve all deposit transactions across all wallets (admin endpoint)"
+          },
+          "response": []
+        }
+      ],
+      "description": "Endpoints for managing user wallets and wallet transactions"
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          ""
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          ""
+        ]
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8085",
+      "type": "string"
+    },
+    {
+      "key": "userId",
+      "value": "1",
+      "type": "string"
+    },
+    {
+      "key": "paymentId",
+      "value": "",
+      "type": "string",
+      "description": "After creating a payment, set this value with the returned payment ID"
+    },
+    {
+      "key": "cardTransactionId",
+      "value": "",
+      "type": "string",
+      "description": "After creating a card transaction, set this value with the returned transaction ID"
+    },
+    {
+      "key": "cryptoTransactionId",
+      "value": "",
+      "type": "string",
+      "description": "After creating a crypto transaction, set this value with the returned transaction ID"
+    },
+    {
+      "key": "nowPaymentId",
+      "value": "",
+      "type": "string",
+      "description": "After creating a crypto transaction, set this with the NowPayments ID"
+    },
+    {
+      "key": "reservationId",
+      "value": "101",
+      "type": "string"
+    },
+    {
+      "key": "status",
+      "value": "PENDING",
+      "type": "string",
+      "description": "Payment status (PENDING, COMPLETED, FAILED, REFUNDED)"
+    },
+    {
+      "key": "statusValue",
+      "value": "WAITING",
+      "type": "string",
+      "description": "Crypto transaction status (WAITING, CONFIRMING, CONFIRMED, SENDING, FINISHED, FAILED, REFUNDED, EXPIRED)"
+    }
+  ]
+}
