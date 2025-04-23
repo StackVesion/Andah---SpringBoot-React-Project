@@ -1,15 +1,15 @@
-FROM eclipse-temurin:17-jdk as build
+FROM maven:3.8.5-openjdk-17 AS build
 WORKDIR /workspace/app
 
-COPY mvnw .
-COPY .mvn .mvn
+# Copy pom.xml and source code
 COPY pom.xml .
-COPY src src
+COPY src ./src
 
-RUN chmod +x mvnw
-RUN ./mvnw install -DskipTests
+# Build the application
+RUN mvn clean package -DskipTests
 RUN mkdir -p target/dependency && (cd target/dependency; jar -xf ../*.jar)
 
+# Create a minimal runtime image
 FROM eclipse-temurin:17-jre
 VOLUME /tmp
 ARG DEPENDENCY=/workspace/app/target/dependency

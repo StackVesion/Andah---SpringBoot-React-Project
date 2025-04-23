@@ -1,19 +1,19 @@
-FROM eclipse-temurin:17-jdk as build
+FROM maven:3.8.5-openjdk-17 AS build
 WORKDIR /workspace/app
 
-COPY mvnw .
-COPY .mvn .mvn
+# Copy pom.xml and source code
 COPY pom.xml .
-COPY src src
+COPY src ./src
 
-RUN chmod +x mvnw
-RUN ./mvnw install -DskipTests
+# Build the application
+RUN mvn clean package -DskipTests
 RUN mkdir -p target/dependency && (cd target/dependency; jar -xf ../*.jar)
 
+# Create a minimal runtime image
 FROM eclipse-temurin:17-jre
 VOLUME /tmp
 ARG DEPENDENCY=/workspace/app/target/dependency
 COPY --from=build ${DEPENDENCY}/BOOT-INF/lib /app/lib
 COPY --from=build ${DEPENDENCY}/META-INF /app/META-INF
 COPY --from=build ${DEPENDENCY}/BOOT-INF/classes /app
-ENTRYPOINT ["java","-cp","app:app/lib/*","com.andah.configserver.ConfigServerApplication"]
+ENTRYPOINT ["java","-cp","app:app/lib/*","com.andah.config_server.ConfigServerApplication"]

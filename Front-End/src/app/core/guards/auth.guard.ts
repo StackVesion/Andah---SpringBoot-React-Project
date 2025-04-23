@@ -5,19 +5,23 @@ import {
   Router,
   RouterStateSnapshot,
 } from '@angular/router'
-import { AuthenticationService } from '@core/services/auth.service'
+
+import { AuthContext } from '../contexts/auth.context'
 
 export const AuthGuard: CanActivateFn = (
   next: ActivatedRouteSnapshot,
   state: RouterStateSnapshot
 ) => {
-  const authenticationService = inject(AuthenticationService)
+  const authContext = inject(AuthContext)
   const router = inject(Router)
-  const currentUser = authenticationService.session
 
-  if (currentUser) return true
+  // Check if user is authenticated using the AuthContext
+  if (authContext.isAuthenticated()) {
+    return true
+  }
 
-  return router.createUrlTree(['/auth/sign-in'], {
+  // Redirect to login page with return URL
+  return router.createUrlTree(['/login'], {
     queryParams: { returnUrl: state.url },
   })
 }
