@@ -32,11 +32,11 @@ import { AuthContext } from '../../core/contexts/auth.context';
                 id="email" 
                 formControlName="email" 
                 placeholder="Enter your email"
-                [ngClass]="{'is-invalid': submitted && f.email.errors}"
+                [ngClass]="{'is-invalid': submitted && f['email'].errors}"
               >
-              <div *ngIf="submitted && f.email.errors" class="invalid-feedback">
-                <div *ngIf="f.email.errors.required">Email is required</div>
-                <div *ngIf="f.email.errors.email">Please enter a valid email</div>
+              <div *ngIf="submitted && f['email'].errors" class="invalid-feedback">
+                <div *ngIf="f['email'].errors['required']">Email is required</div>
+                <div *ngIf="f['email'].errors['email']">Please enter a valid email</div>
               </div>
             </div>
 
@@ -48,10 +48,10 @@ import { AuthContext } from '../../core/contexts/auth.context';
                 id="password" 
                 formControlName="password" 
                 placeholder="Enter your password"
-                [ngClass]="{'is-invalid': submitted && f.password.errors}"
+                [ngClass]="{'is-invalid': submitted && f['password'].errors}"
               >
-              <div *ngIf="submitted && f.password.errors" class="invalid-feedback">
-                <div *ngIf="f.password.errors.required">Password is required</div>
+              <div *ngIf="submitted && f['password'].errors" class="invalid-feedback">
+                <div *ngIf="f['password'].errors['required']">Password is required</div>
               </div>
             </div>
 

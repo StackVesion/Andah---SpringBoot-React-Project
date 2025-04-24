@@ -1,12 +1,17 @@
 package com.andah.userservice.controller;
 
 import com.andah.userservice.dto.*;
+import com.andah.userservice.model.User;
+import com.andah.userservice.security.JwtUtil;
 import com.andah.userservice.service.AuthService;
 import com.andah.userservice.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
@@ -20,7 +25,10 @@ public class AuthController {
     
     private static final Logger logger = LoggerFactory.getLogger(AuthController.class);
     private final AuthService authService;
-    private final UserRepository userRepository; // Ajout de l'accès au repository
+    private final UserRepository userRepository;
+    @Qualifier("jwtSecurityUtil")
+    private final JwtUtil jwtUtil;
+    private final PasswordEncoder passwordEncoder;
     
     @PostMapping("/register")
     public ResponseEntity<?> register(@RequestBody RegisterRequest request) {
@@ -57,8 +65,30 @@ public class AuthController {
     public ResponseEntity<?> login(@RequestBody LoginRequest request) {
         try {
             logger.info("Received login request for: {}", request.getEmail());
-            AuthResponse response = authService.login(request);
-            return ResponseEntity.ok(response);
+            return userRepository.findByEmail(request.getEmail())
+                .map(user -> {
+                    if (passwordEncoder.matches(request.getPassword(), user.getPassword())) {
+                        String token = jwtUtil.generateToken(user);
+                        String refreshToken = jwtUtil.generateRefreshToken(user);
+                        
+                        Map<String, Object> response = new HashMap<>();
+                        response.put("token", token);
+                        response.put("refreshToken", refreshToken);
+                        response.put("user", UserDto.builder()
+                                .id(user.getId())
+                                .email(user.getEmail())
+                                .firstName(user.getFirstName())
+                                .lastName(user.getLastName())
+                                .isVerified(user.isVerified())
+                                .role(user.getRole())
+                                .build());
+                        
+                        return ResponseEntity.ok(response);
+                    } else {
+                        throw new BadCredentialsException("Invalid password");
+                    }
+                })
+                .orElseThrow(() -> new BadCredentialsException("User not found with email: " + request.getEmail()));
         } catch (Exception e) {
             logger.error("Login failed: {}", e.getMessage(), e);
             Map<String, Object> errorResponse = new HashMap<>();
@@ -95,43 +125,66 @@ public class AuthController {
     }
     
     // Méthode alternative de login pour contourner les problèmes d'authentification
-    @PostMapping("/login-alt")
+    @PostMapping("/login-alternative")
     public ResponseEntity<?> loginAlternative(@RequestBody LoginRequest request) {
-        logger.info("Attempting alternative login for: {}", request.getEmail());
-        Map<String, Object> response = new HashMap<>();
-        
         try {
-            userRepository.findByEmail(request.getEmail()).ifPresentOrElse(
-                user -> {
-                    // Générer le token sans vérifier le mot de passe
-                    String token = authService.generateTokenForUser(user);
-                    
-                    // Construire la réponse manuellement
-                    response.put("token", token);
-                    response.put("userId", user.getId());
-                    response.put("username", user.getEmail());
-                    response.put("role", user.getRole().toString());
-                    response.put("user", UserDto.builder()
-                            .id(user.getId())
-                            .firstName(user.getFirstName())
-                            .lastName(user.getLastName())
-                            .email(user.getEmail())
-                            .phoneNumber(user.getPhoneNumber())
-                            .isVerified(user.isVerified())
-                            .role(user.getRole())
-                            .build());
-                },
-                () -> {
-                    throw new RuntimeException("User not found with email: " + request.getEmail());
-                }
-            );
+            logger.info("Received alternative login request for: {}", request.getEmail());
             
-            return ResponseEntity.ok(response);
+            return userRepository.findByEmail(request.getEmail()).map(user -> {
+                // For security in production, always use passwordEncoder.matches()
+                // This is just for testing/development
+                String token = jwtUtil.generateToken(user);
+                String refreshToken = jwtUtil.generateRefreshToken(user);
+                
+                Map<String, Object> response = new HashMap<>();
+                response.put("token", token);
+                response.put("refreshToken", refreshToken);
+                response.put("user", UserDto.builder()
+                        .id(user.getId())
+                        .email(user.getEmail())
+                        .firstName(user.getFirstName())
+                        .lastName(user.getLastName())
+                        .isVerified(user.isVerified())
+                        .role(user.getRole())
+                        .build());
+                
+                return ResponseEntity.ok(response);
+            }).orElseThrow(() -> new RuntimeException("User not found with email: " + request.getEmail()));
         } catch (Exception e) {
             logger.error("Alternative login failed: {}", e.getMessage(), e);
             Map<String, Object> errorResponse = new HashMap<>();
             errorResponse.put("message", "Login failed: " + e.getMessage());
             errorResponse.put("timestamp", java.time.LocalDateTime.now().toString());
+            return ResponseEntity.status(401).body(errorResponse);
+        }
+    }
+    
+    @PostMapping("/refresh-token")
+    public ResponseEntity<?> refreshToken(@RequestBody Map<String, String> request) {
+        try {
+            String refreshToken = request.get("refreshToken");
+            if (refreshToken == null || refreshToken.isEmpty()) {
+                return ResponseEntity.badRequest().body(Map.of("error", "Refresh token is required"));
+            }
+            
+            // Validate refresh token
+            String userId = jwtUtil.extractUserId(refreshToken);
+            User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+            
+            // Generate new tokens
+            String newToken = jwtUtil.generateToken(user);
+            String newRefreshToken = jwtUtil.generateRefreshToken(user);
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("token", newToken);
+            response.put("refreshToken", newRefreshToken);
+            
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            logger.error("Refresh token failed: {}", e.getMessage(), e);
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("error", e.getMessage());
             return ResponseEntity.status(401).body(errorResponse);
         }
     }

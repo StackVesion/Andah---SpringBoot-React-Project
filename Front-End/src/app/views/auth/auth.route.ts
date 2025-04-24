@@ -7,13 +7,14 @@ import { LoginComponent } from '../../components/auth/login.component'
 import { RegisterComponent } from '../../components/auth/register.component'
 
 export const AUTH_ROUTES: Route[] = [
-  // Original routes
+  // Use template pages as primary routes
+  { path: '', redirectTo: 'sign-in', pathMatch: 'full' },
   { path: 'sign-in', component: SignInComponent, data: { title: 'Sign In' } },
   { path: 'sign-up', component: SignUpComponent, data: { title: 'Sign Up' } },
   
-  // New routes with modern auth context
-  { path: 'login', component: LoginComponent, data: { title: 'Login' } },
-  { path: 'register', component: RegisterComponent, data: { title: 'Register' } },
+  // Keep old routes for backward compatibility
+  { path: 'login', component: SignInComponent, data: { title: 'Login' } },
+  { path: 'register', component: SignUpComponent, data: { title: 'Register' } },
 
   {
     path: 'forgot-password',

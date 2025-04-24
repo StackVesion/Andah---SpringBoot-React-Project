@@ -16,25 +16,86 @@
     <p class="mb-0">
       Already a member?<a routerLink="/auth/sign-in"> Log in</a>
     </p>
+    
+    <!-- Display success message -->
+    @if (registrationSuccess) {
+      <div class="alert alert-success mt-3">
+        <i class="fas fa-check-circle me-2"></i> Registration successful! Your account has been created. Redirecting to home page...
+      </div>
+    }
+    
+    <!-- Display debug info in development -->
+    @if (apiDebugInfo) {
+      <div class="alert alert-info mt-3 small">
+        <strong>Debug Info:</strong>
+        <pre style="white-space: pre-wrap;">{{ apiDebugInfo }}</pre>
+      </div>
+    }
+    
+    <!-- Display error message if any -->
+    @if (errorMessage) {
+      <div class="alert alert-danger mt-3">
+        {{ errorMessage }}
+      </div>
+    }
 
     <form
       [formGroup]="signupForm"
       (ngSubmit)="onSubmit()"
       class="mt-4 text-start"
     >
+      <!-- First Name -->
       <div class="mb-3">
-        <label class="form-label">Enter email id</label>
+        <label class="form-label">First Name</label>
+        <input
+          type="text"
+          formControlName="firstName"
+          class="form-control"
+          [ngClass]="{ 'is-invalid': submitted && form['firstName'].errors }"
+        />
+        <div class="invalid-feedback">Please enter your first name</div>
+      </div>
+
+      <!-- Last Name -->
+      <div class="mb-3">
+        <label class="form-label">Last Name</label>
+        <input
+          type="text"
+          formControlName="lastName"
+          class="form-control"
+          [ngClass]="{ 'is-invalid': submitted && form['lastName'].errors }"
+        />
+        <div class="invalid-feedback">Please enter your last name</div>
+      </div>
+
+      <!-- Email -->
+      <div class="mb-3">
+        <label class="form-label">Email Address</label>
         <input
           type="email"
           formControlName="email"
           class="form-control"
           [ngClass]="{ 'is-invalid': submitted && form['email'].errors }"
         />
-        <div class="invalid-feedback">Please enter your email</div>
+        <div class="invalid-feedback">Please enter a valid email address</div>
       </div>
 
+      <!-- Phone Number -->
+      <div class="mb-3">
+        <label class="form-label">Phone Number</label>
+        <input
+          type="tel"
+          formControlName="phoneNumber"
+          class="form-control"
+          placeholder="+1234567890"
+          [ngClass]="{ 'is-invalid': submitted && form['phoneNumber'].errors }"
+        />
+        <div class="invalid-feedback">Please enter a valid phone number</div>
+      </div>
+
+      <!-- Password -->
       <div class="mb-3 position-relative">
-        <label class="form-label">Enter password</label>
+        <label class="form-label">Password</label>
         <input
           class="form-control fakepassword"
           formControlName="password"
@@ -42,24 +103,19 @@
           id="psw-input"
           [ngClass]="{ 'is-invalid': submitted && form['password'].errors }"
         />
-        @if (
-          (signupForm.get('confirmpwd')?.touched &&
-            signupForm.errors?.['notSame']) ||
-          (!submitted && form['password'].errors)
-        ) {
-          <span
-            class="position-absolute top-50 end-0 translate-middle-y p-0 mt-3"
-          >
-            <i
-              class="fakepasswordicon fas fa-eye-slash cursor-pointer p-2"
-              [ngClass]="{ 'fa-eye': fieldTextType }"
-              (click)="changetype()"
-            ></i>
-          </span>
-        }
-        <div class="invalid-feedback">Please enter your password</div>
+        <span class="position-absolute top-50 end-0 translate-middle-y p-0 mt-3">
+          <i
+            class="fakepasswordicon fas fa-eye-slash cursor-pointer p-2"
+            [ngClass]="{ 'fa-eye': fieldTextType }"
+            (click)="changetype()"
+          ></i>
+        </span>
+        <div class="invalid-feedback">
+          Password must be at least 6 characters
+        </div>
       </div>
 
+      <!-- Confirm Password -->
       <div class="mb-3 position-relative">
         <label class="form-label">Confirm Password</label>
         <input
@@ -72,17 +128,13 @@
           }"
           class="form-control"
         />
-        @if (!submitted && form['confirmpwd'].errors) {
-          <span
-            class="position-absolute top-50 end-0 translate-middle-y p-0 mt-3"
-          >
-            <i
-              class="fakepasswordicon fas fa-eye-slash cursor-pointer p-2"
-              [ngClass]="{ 'fa-eye': fieldTextType1 }"
-              (click)="fieldTextType1 = !fieldTextType1"
-            ></i>
-          </span>
-        }
+        <span class="position-absolute top-50 end-0 translate-middle-y p-0 mt-3">
+          <i
+            class="fakepasswordicon fas fa-eye-slash cursor-pointer p-2"
+            [ngClass]="{ 'fa-eye': fieldTextType1 }"
+            (click)="fieldTextType1 = !fieldTextType1"
+          ></i>
+        </span>
         <div class="invalid-feedback">
           New password and confirm password doesn't match
         </div>
@@ -100,8 +152,13 @@
       </div>
 
       <div>
-        <button type="submit" class="btn btn-primary w-100 mb-0">
-          Sign up
+        <button type="submit" class="btn btn-primary w-100 mb-0" [disabled]="isLoading">
+          @if (isLoading) {
+            <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+            Loading...
+          } @else {
+            Sign up
+          }
         </button>
       </div>
 
@@ -126,10 +183,8 @@
       </div>
 
       <div class="text-primary-hover text-body mt-3 text-center">
-        Copyrights ©{{ currentYear }} Booking. Build by
-        <a href="{{ creditsBy.website }}" class="text-body">{{
-          creditsBy.name
-        }}</a
+        Copyrights {{ currentYear }} Booking. Build by
+        <a href="{{ creditsBy.website }}" class="text-body">{{ creditsBy.name }}</a
         >.
       </div>
     </form>

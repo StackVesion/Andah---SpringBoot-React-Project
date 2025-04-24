@@ -54,30 +54,27 @@ services:
 
   # API Gateway
   api-gateway:
-    build: ./api-gateway
-    container_name: api-gateway
+    build:
+      context: api-gateway
     ports:
-      - "8080:8080"
+      - "8080:8090"
     depends_on:
-      eureka-server:
-        condition: service_healthy
       config-server:
         condition: service_healthy
+      eureka-server:
+        condition: service_healthy
     environment:
-      - SPRING_PROFILES_ACTIVE=docker
+      - SPRING_PROFILES_ACTIVE=default
+      - SPRING_CONFIG_IMPORT=optional:configserver:http://config-server:8888
       - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
-      - SPRING_CLOUD_CONFIG_URI=http://config-server:8888
-      # Explicitly enable API Gateway service discovery
-      - SPRING_CLOUD_GATEWAY_DISCOVERY_LOCATOR_ENABLED=true
-      - SPRING_CLOUD_GATEWAY_DISCOVERY_LOCATOR_LOWER-CASE-SERVICE-ID=true
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
-      interval: 30s
-      timeout: 10s
+      test: "curl --fail --silent localhost:8090/actuator/health | grep UP || exit 1"
+      interval: 10s
+      timeout: 5s
       retries: 5
+      start_period: 40s
     networks:
       - andah-network
-    <<: *common-dns
 
   # ======= DATABASE SERVICES =======
 
@@ -132,8 +129,10 @@ services:
       - MONGO_INITDB_ROOT_PASSWORD=mongodb
     ports:
       - "27017:27017"
+    command: mongod --bind_ip_all --auth
     volumes:
       - mongodb-payment-data:/data/db
+      - ./mongo-init:/docker-entrypoint-initdb.d
     healthcheck:
       test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')", "--quiet"]
       interval: 30s

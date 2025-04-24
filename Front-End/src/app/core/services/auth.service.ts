@@ -9,8 +9,10 @@ import { environment } from '../../../environments/environment'
 
 export interface AuthResponse {
   token: string;
+  refreshToken?: string;
   userId: string;
   username: string;
+  email: string;
   role: string;
   user: User;
 }
@@ -21,9 +23,9 @@ export interface LoginRequest {
 }
 
 export interface RegisterRequest {
+  name?: string;
   firstName: string;
   lastName: string;
-  name: string;
   email: string;
   password: string;
   phoneNumber: string;
@@ -31,18 +33,20 @@ export interface RegisterRequest {
 
 @Injectable({ providedIn: 'root' })
 export class AuthenticationService {
-  private readonly API_URL = environment.apiUrl || 'http://localhost:8080/api';
+  private readonly API_URL = environment.apiUrl || 'http://localhost:8080';
+  private readonly AUTH_ENDPOINT = `${this.API_URL}/user-service/api/auth`; 
+  
   private userSubject: BehaviorSubject<User | null>;
   public user$: Observable<User | null>;
 
   public readonly authSessionKey = '_ANDAH_AUTH_SESSION_KEY_';
+  public readonly refreshTokenKey = '_ANDAH_REFRESH_TOKEN_KEY_';
   public readonly userDataKey = '_ANDAH_USER_DATA_KEY_';
 
   constructor(
     private http: HttpClient,
     private cookieService: CookieService
   ) {
-    // Initialize user from localStorage
     const userData = localStorage.getItem(this.userDataKey);
     this.userSubject = new BehaviorSubject<User | null>(
       userData ? JSON.parse(userData) : null
@@ -50,37 +54,46 @@ export class AuthenticationService {
     this.user$ = this.userSubject.asObservable();
   }
 
-  // Get current user value without subscribing to the user$ Observable
   public get currentUser(): User | null {
     return this.userSubject.value;
   }
 
-  // Check if user is authenticated
   public get isAuthenticated(): boolean {
     return !!this.currentUser && !!this.getToken();
   }
 
-  // Get authentication token
   public getToken(): string | null {
     return this.cookieService.get(this.authSessionKey) || null;
   }
 
+  public getRefreshToken(): string | null {
+    return this.cookieService.get(this.refreshTokenKey) || null;
+  }
+
   login(credentials: LoginRequest): Observable<AuthResponse> {
-    return this.http.post<AuthResponse>(`${this.API_URL}/auth/login`, credentials)
+    console.log(`Attempting login via ${this.AUTH_ENDPOINT}/login with:`, {...credentials, password: '[REDACTED]'});
+    return this.http.post<AuthResponse>(`${this.AUTH_ENDPOINT}/login`, credentials)
       .pipe(
-        tap(response => this.handleAuthResponse(response)),
+        tap(response => this.storeAuthData(response)),
         catchError(error => {
           console.error('Login failed:', error);
-          return throwError(() => new Error(error.error?.message || 'Login failed. Please check your credentials.'));
+          let errorMsg = 'Login failed. Please check your credentials.';
+          if (error.error?.message) {
+            errorMsg = error.error.message;
+          } else if (error.status === 401) {
+            errorMsg = 'Invalid email or password.';
+          } else if (error.status === 0) {
+            errorMsg = 'Unable to connect to the server. Please check your internet connection.';
+          }
+          return throwError(() => new Error(errorMsg));
         })
       );
   }
 
-  // Alternative method for troubleshooting login
   loginAlternative(credentials: LoginRequest): Observable<AuthResponse> {
-    return this.http.post<AuthResponse>(`${this.API_URL}/auth/login-alternative`, credentials)
+    return this.http.post<AuthResponse>(`${this.AUTH_ENDPOINT}/login-alternative`, credentials)
       .pipe(
-        tap(response => this.handleAuthResponse(response)),
+        tap(response => this.storeAuthData(response)),
         catchError(error => {
           console.error('Alternative login failed:', error);
           return throwError(() => new Error(error.error?.message || 'Login failed. Please check your credentials.'));
@@ -89,19 +102,72 @@ export class AuthenticationService {
   }
 
   register(request: RegisterRequest): Observable<AuthResponse> {
-    return this.http.post<AuthResponse>(`${this.API_URL}/auth/register`, request)
+    console.log(`Attempting registration via ${this.AUTH_ENDPOINT}/register with:`, {...request, password: '[REDACTED]'});
+    if (!request.name) {
+      request.name = `${request.firstName} ${request.lastName}`;
+    }
+    
+    return this.http.post<AuthResponse>(`${this.AUTH_ENDPOINT}/register`, request)
       .pipe(
-        tap(response => this.handleAuthResponse(response)),
+        tap(response => this.storeAuthData(response)),
         catchError(error => {
           console.error('Registration failed:', error);
-          return throwError(() => new Error(error.error?.message || 'Registration failed. Please try again.'));
+          let errorMsg = 'Registration failed. Please try again.';
+          if (error.error?.message) {
+            errorMsg = error.error.message;
+          } else if (error.status === 409) {
+            errorMsg = 'This email is already registered. Please use a different email or login.';
+          } else if (error.status === 400) {
+            errorMsg = 'Invalid registration data. Please check your information.';
+          } else if (error.status === 0) {
+            errorMsg = 'Unable to connect to the server. Please check your internet connection.';
+          }
+          return throwError(() => new Error(errorMsg));
         })
       );
   }
 
-  // Send OTP for email verification or password reset
+  registerWithDebug(request: RegisterRequest): Observable<any> {
+    console.log(`Debug registration via ${this.AUTH_ENDPOINT}/register with:`, {...request, password: '[REDACTED]'});
+    
+    return this.http.post(`${this.AUTH_ENDPOINT}/register`, request)
+      .pipe(
+        tap(response => {
+          console.log('Debug registration successful:', response);
+        }),
+        catchError(error => {
+          console.error('Debug registration error details:', {
+            status: error.status,
+            statusText: error.statusText,
+            error: error.error,
+            message: error.message,
+            url: `${this.AUTH_ENDPOINT}/register`
+          });
+          return throwError(() => error);
+        })
+      );
+  }
+
+  refreshAccessToken(): Observable<AuthResponse> {
+    const refreshToken = this.getRefreshToken();
+    
+    if (!refreshToken) {
+      return throwError(() => new Error('No refresh token available'));
+    }
+    
+    return this.http.post<AuthResponse>(`${this.AUTH_ENDPOINT}/refresh-token`, { refreshToken })
+      .pipe(
+        tap(response => this.storeAuthData(response)),
+        catchError(error => {
+          console.error('Token refresh failed:', error);
+          this.logout();
+          return throwError(() => new Error('Your session has expired. Please login again.'));
+        })
+      );
+  }
+
   generateOtp(email: string): Observable<any> {
-    return this.http.post<any>(`${this.API_URL}/auth/generate-otp`, { email })
+    return this.http.post<any>(`${this.AUTH_ENDPOINT}/generate-otp`, { email })
       .pipe(
         catchError(error => {
           console.error('OTP generation failed:', error);
@@ -110,11 +176,10 @@ export class AuthenticationService {
       );
   }
 
-  // Login with OTP
   loginWithOtp(email: string, otp: string): Observable<AuthResponse> {
-    return this.http.post<AuthResponse>(`${this.API_URL}/auth/login-with-otp`, { email, otp })
+    return this.http.post<AuthResponse>(`${this.AUTH_ENDPOINT}/login-with-otp`, { email, otp })
       .pipe(
-        tap(response => this.handleAuthResponse(response)),
+        tap(response => this.storeAuthData(response)),
         catchError(error => {
           console.error('OTP login failed:', error);
           return throwError(() => new Error(error.error?.message || 'Login with verification code failed.'));
@@ -122,9 +187,8 @@ export class AuthenticationService {
       );
   }
 
-  // Request password reset
   requestPasswordReset(email: string): Observable<any> {
-    return this.http.post<any>(`${this.API_URL}/auth/reset-password-request`, { email })
+    return this.http.post<any>(`${this.AUTH_ENDPOINT}/reset-password-request`, { email })
       .pipe(
         catchError(error => {
           console.error('Password reset request failed:', error);
@@ -133,9 +197,8 @@ export class AuthenticationService {
       );
   }
 
-  // Reset password with token
   resetPassword(token: string, newPassword: string): Observable<any> {
-    return this.http.post<any>(`${this.API_URL}/auth/reset-password`, { token, newPassword })
+    return this.http.post<any>(`${this.AUTH_ENDPOINT}/reset-password`, { token, newPassword })
       .pipe(
         catchError(error => {
           console.error('Password reset failed:', error);
@@ -145,35 +208,66 @@ export class AuthenticationService {
   }
 
   logout(): void {
-    // Remove user data and token
+    // Only attempt server-side logout if we have a token (we're authenticated)
+    const token = this.getToken();
+    if (token) {
+      try {
+        this.http.post(`${this.AUTH_ENDPOINT}/logout`, {}).subscribe({
+          next: () => console.log('Server-side logout successful'),
+          error: (err) => console.warn('Server-side logout failed:', err)
+        });
+      } catch (e) {
+        console.warn('Error during server-side logout:', e);
+      }
+    } else {
+      console.log('No token available, skipping server-side logout');
+    }
+
+    // Always perform client-side logout
     this.cookieService.delete(this.authSessionKey, '/');
+    this.cookieService.delete(this.refreshTokenKey, '/');
     localStorage.removeItem(this.userDataKey);
     this.userSubject.next(null);
   }
 
-  // Handle authentication response
-  private handleAuthResponse(response: AuthResponse): void {
-    // Store token in cookie (with secure settings for production)
-    this.cookieService.set(
-      this.authSessionKey,
-      response.token,
-      {
-        expires: 1, // 1 day
-        path: '/',
-        secure: environment.production,
-        sameSite: 'Strict'
-      }
-    );
+  private storeAuthData(data: AuthResponse): void {
+    if (data && data.token) {
+      // Store tokens
+      this.cookieService.set(
+        this.authSessionKey,
+        data.token,
+        {
+          expires: 1, // 1 day
+          path: '/',
+          secure: environment.production,
+          sameSite: 'Strict'
+        }
+      );
 
-    // Store user data in localStorage
-    const userData = {
-      id: response.userId,
-      email: response.username,
-      role: response.role,
-      ...response.user
-    };
-    
-    localStorage.setItem(this.userDataKey, JSON.stringify(userData));
-    this.userSubject.next(userData as User);
+      if (data.refreshToken) {
+        this.cookieService.set(
+          this.refreshTokenKey,
+          data.refreshToken,
+          {
+            expires: 7, // 7 days
+            path: '/',
+            secure: environment.production,
+            sameSite: 'Strict'
+          }
+        );
+      }
+
+      // Create user data object
+      const userData = {
+        id: data.userId,
+        email: data.username,
+        role: data.role,
+        ...data.user
+      };
+      
+      // Store user data in localStorage
+      localStorage.setItem(this.userDataKey, JSON.stringify(userData));
+      this.userSubject.next(userData as User);
+    }
   }
 }

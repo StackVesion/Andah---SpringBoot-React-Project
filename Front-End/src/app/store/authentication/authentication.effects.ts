@@ -18,13 +18,25 @@ export class AuthenticationEffects {
     this.actions$.pipe(
       ofType(login),
       exhaustMap(({ email, password }) => {
-        return this.AuthenticationService.login(email, password).pipe(
-          map((user) => {
-            if (user) {
+        // Create credentials object to match the expected API
+        const credentials = { email, password };
+        
+        return this.AuthenticationService.login(credentials).pipe(
+          map((response) => {
+            if (response) {
               const returnUrl =
                 this.route.snapshot.queryParams['returnUrl'] || '/'
               this.router.navigateByUrl(returnUrl)
             }
+            
+            // Extract user from response - using cast for type compatibility
+            const user = {
+              id: response.userId,
+              email: response.username,
+              role: response.role as any, // Using 'as any' to avoid type issues
+              ...(response.user || {})
+            };
+            
             return loginSuccess({ user })
           }),
           catchError((error) => of(loginFailure({ error })))
@@ -38,7 +50,7 @@ export class AuthenticationEffects {
       ofType(logout),
       exhaustMap(() => {
         this.AuthenticationService.logout()
-        this.router.navigate(['/pages-logout'])
+        this.router.navigate(['/login'])
         return of(logoutSuccess())
       })
     )

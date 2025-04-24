@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Registration Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; max-width: 500px; margin: 0 auto; }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; }
+        input { width: 100%; padding: 8px; box-sizing: border-box; }
+        button { padding: 10px 15px; background: #4CAF50; color: white; border: none; cursor: pointer; }
+        #response { margin-top: 20px; padding: 10px; border: 1px solid #ddd; background: #f9f9f9; white-space: pre-wrap; }
+    </style>
+</head>
+<body>
+    <h2>Registration API Test</h2>
+    <form id="registerForm">
+        <div class="form-group">
+            <label for="firstName">First Name:</label>
+            <input type="text" id="firstName" required>
+        </div>
+        <div class="form-group">
+            <label for="lastName">Last Name:</label>
+            <input type="text" id="lastName" required>
+        </div>
+        <div class="form-group">
+            <label for="email">Email:</label>
+            <input type="email" id="email" required>
+        </div>
+        <div class="form-group">
+            <label for="phoneNumber">Phone Number:</label>
+            <input type="tel" id="phoneNumber" required placeholder="+1234567890">
+        </div>
+        <div class="form-group">
+            <label for="password">Password:</label>
+            <input type="password" id="password" required>
+        </div>
+        <div class="form-group">
+            <button type="submit">Register</button>
+        </div>
+    </form>
+    
+    <div>
+        <h3>Response:</h3>
+        <div id="response">No response yet</div>
+    </div>
+
+    <script>
+        document.getElementById('registerForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const registerData = {
+                firstName: document.getElementById('firstName').value,
+                lastName: document.getElementById('lastName').value,
+                email: document.getElementById('email').value,
+                phoneNumber: document.getElementById('phoneNumber').value,
+                password: document.getElementById('password').value
+            };
+            
+            const responseDiv = document.getElementById('response');
+            responseDiv.innerHTML = 'Sending request...';
+            
+            // Test with original URL format
+            fetch('http://localhost:8080/api/user-service/api/auth/register', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(registerData)
+            })
+            .then(response => {
+                const status = response.status;
+                const statusText = response.statusText;
+                
+                if (response.ok) {
+                    return response.json().then(data => {
+                        responseDiv.innerHTML = `Success (${status}):\n${JSON.stringify(data, null, 2)}`;
+                    });
+                } else {
+                    return response.text().then(text => {
+                        try {
+                            const json = JSON.parse(text);
+                            responseDiv.innerHTML = `Error (${status} ${statusText}):\n${JSON.stringify(json, null, 2)}`;
+                        } catch (e) {
+                            responseDiv.innerHTML = `Error (${status} ${statusText}):\n${text}`;
+                        }
+                    });
+                }
+            })
+            .catch(error => {
+                responseDiv.innerHTML = `Network Error: ${error.message}`;
+                console.error('Fetch error:', error);
+                
+                // Try alternate URL format as fallback
+                responseDiv.innerHTML += '\n\nTrying alternate URL format...';
+                
+                fetch('http://localhost:8080/user-service/api/auth/register', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(registerData)
+                })
+                .then(response => {
+                    const status = response.status;
+                    const statusText = response.statusText;
+                    
+                    if (response.ok) {
+                        return response.json().then(data => {
+                            responseDiv.innerHTML += `\n\nSuccess with alternate URL (${status}):\n${JSON.stringify(data, null, 2)}`;
+                        });
+                    } else {
+                        return response.text().then(text => {
+                            try {
+                                const json = JSON.parse(text);
+                                responseDiv.innerHTML += `\n\nError with alternate URL (${status} ${statusText}):\n${JSON.stringify(json, null, 2)}`;
+                            } catch (e) {
+                                responseDiv.innerHTML += `\n\nError with alternate URL (${status} ${statusText}):\n${text}`;
+                            }
+                        });
+                    }
+                })
+                .catch(e => {
+                    responseDiv.innerHTML += `\n\nAlternate URL also failed: ${e.message}`;
+                });
+            });
+        });
+    </script>
+</body>
+</html>
