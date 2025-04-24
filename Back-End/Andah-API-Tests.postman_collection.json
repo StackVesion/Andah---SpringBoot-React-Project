@@ -1,0 +1,732 @@
+{
+	"info": {
+		"_postman_id": "bd7e8c5a-6e2f-4a51-9e1e-7f8d9a742b19",
+		"name": "Andah API Tests",
+		"description": "Collection for testing all Andah backend services",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Auth & User Service",
+			"item": [
+				{
+					"name": "Register User",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = JSON.parse(responseBody);",
+									"if (jsonData.token) {",
+									"    pm.environment.set(\"authToken\", jsonData.token);",
+									"    pm.environment.set(\"userId\", jsonData.user.id || jsonData.user._id);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"Test User\",\n    \"firstName\": \"Test\",\n    \"lastName\": \"User\",\n    \"email\": \"testuser{{$timestamp}}@example.com\",\n    \"password\": \"TestPassword123\",\n    \"phoneNumber\": \"+1234567890\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/user-service/api/auth/register",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"user-service",
+								"api",
+								"auth",
+								"register"
+							]
+						},
+						"description": "Register a new user and automatically save the token"
+					},
+					"response": []
+				},
+				{
+					"name": "Login User",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = JSON.parse(responseBody);",
+									"if (jsonData.token) {",
+									"    pm.environment.set(\"authToken\", jsonData.token);",
+									"    pm.environment.set(\"userId\", jsonData.user.id || jsonData.user._id);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"testuser@example.com\",\n    \"password\": \"TestPassword123\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/user-service/api/auth/login",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"user-service",
+								"api",
+								"auth",
+								"login"
+							]
+						},
+						"description": "Login with existing user credentials"
+					},
+					"response": []
+				},
+				{
+					"name": "Login User (Alternative Format)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = JSON.parse(responseBody);",
+									"if (jsonData.token) {",
+									"    pm.environment.set(\"authToken\", jsonData.token);",
+									"    pm.environment.set(\"userId\", jsonData.user.id || jsonData.user._id);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"username\": \"nihed@gmail.com\",\n    \"password\": \"TestPassword123\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/user-service/api/auth/login",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"user-service",
+								"api",
+								"auth",
+								"login"
+							]
+						},
+						"description": "Try login with username instead of email"
+					},
+					"response": []
+				},
+				{
+					"name": "Get User Profile",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{authToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/user-service/api/users/{{userId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"user-service",
+								"api",
+								"users",
+								"{{userId}}"
+							]
+						},
+						"description": "Get details of the authenticated user"
+					},
+					"response": []
+				},
+				{
+					"name": "Test Token Validity",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{manualToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/user-service/api/users/me",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"user-service",
+								"api",
+								"users",
+								"me"
+							]
+						},
+						"description": "Test if the token from registration works"
+					},
+					"response": []
+				}
+			],
+			"description": "Endpoints for user authentication and management"
+		},
+		{
+			"name": "Payment Service",
+			"item": [
+				{
+					"name": "Get User Wallet",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{authToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/payment-service/api/wallets/user/{{userId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"payment-service",
+								"api",
+								"wallets",
+								"user",
+								"{{userId}}"
+							]
+						},
+						"description": "Get wallet information for the current user"
+					},
+					"response": []
+				},
+				{
+					"name": "Add Funds to Wallet",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{authToken}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"userId\": \"{{userId}}\",\n    \"amount\": 100.00,\n    \"paymentMethod\": \"CARD\",\n    \"cardDetails\": {\n        \"cardNumber\": \"4111111111111111\",\n        \"expiryMonth\": 12,\n        \"expiryYear\": 2025,\n        \"cvv\": \"123\",\n        \"cardHolderName\": \"Test User\"\n    }\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/payment-service/api/payments/wallet/add-funds",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"payment-service",
+								"api",
+								"payments",
+								"wallet",
+								"add-funds"
+							]
+						},
+						"description": "Add funds to a user's wallet using a credit card"
+					},
+					"response": []
+				},
+				{
+					"name": "Create Crypto Payment",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{authToken}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"userId\": \"{{userId}}\",\n    \"amount\": 50.00,\n    \"currency\": \"usd\",\n    \"cryptoCurrency\": \"btc\",\n    \"description\": \"Add funds via cryptocurrency\",\n    \"returnUrl\": \"http://localhost:4200/payment-success\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/payment-service/api/crypto-transactions/create",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"payment-service",
+								"api",
+								"crypto-transactions",
+								"create"
+							]
+						},
+						"description": "Create a crypto payment to add funds to wallet"
+					},
+					"response": []
+				}
+			],
+			"description": "Endpoints for payment processing and wallet management"
+		},
+		{
+			"name": "Reclamation Service",
+			"item": [
+				{
+					"name": "Create Reclamation (Public)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"title\": \"Payment Issue\",\n    \"description\": \"My wallet was not credited correctly after payment\",\n    \"user_id\": \"{{userId}}\",\n    \"category\": \"payment\",\n    \"priority\": \"high\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/reclamation-service/api/reclamations/public/submit",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"reclamation-service",
+								"api",
+								"reclamations",
+								"public",
+								"submit"
+							]
+						},
+						"description": "Create a new reclamation (public endpoint)"
+					},
+					"response": []
+				},
+				{
+					"name": "Create Reclamation (Authenticated)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{authToken}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"title\": \"Payment Issue\",\n    \"description\": \"My wallet was not credited correctly after payment\",\n    \"user_id\": \"{{userId}}\",\n    \"category\": \"payment\",\n    \"priority\": \"high\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/reclamation-service/api/reclamations",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"reclamation-service",
+								"api",
+								"reclamations"
+							]
+						},
+						"description": "Create a new reclamation (authenticated)"
+					},
+					"response": []
+				},
+				{
+					"name": "Get User Reclamations",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{authToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/reclamation-service/api/reclamations/user/{{userId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"reclamation-service",
+								"api",
+								"reclamations",
+								"user",
+								"{{userId}}"
+							]
+						},
+						"description": "Get all reclamations for a specific user"
+					},
+					"response": []
+				}
+			],
+			"description": "Endpoints for handling customer reclamations"
+		},
+		{
+			"name": "Station Service",
+			"item": [
+				{
+					"name": "Get All Stations",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/station-service/api/stations?page=0&size=10",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"station-service",
+								"api",
+								"stations"
+							],
+							"query": [
+								{
+									"key": "page",
+									"value": "0"
+								},
+								{
+									"key": "size",
+									"value": "10"
+								}
+							]
+						},
+						"description": "Get a list of all available stations"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Station by ID",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/station-service/api/stations/{{stationId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"station-service",
+								"api",
+								"stations",
+								"{{stationId}}"
+							]
+						},
+						"description": "Get details of a specific station by ID"
+					},
+					"response": []
+				},
+				{
+					"name": "Find Stations by Location",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/station-service/api/stations/nearby?latitude=45.7640&longitude=4.8357&radius=2.0",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"station-service",
+								"api",
+								"stations",
+								"nearby"
+							],
+							"query": [
+								{
+									"key": "latitude",
+									"value": "45.7640"
+								},
+								{
+									"key": "longitude",
+									"value": "4.8357"
+								},
+								{
+									"key": "radius",
+									"value": "2.0"
+								}
+							]
+						},
+						"description": "Find stations near a specific location"
+					},
+					"response": []
+				}
+			],
+			"description": "Endpoints for station management"
+		},
+		{
+			"name": "Scooter Service",
+			"item": [
+				{
+					"name": "Get Available Scooters",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{authToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/scooter-service/api/scooters/available",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"scooter-service",
+								"api",
+								"scooters",
+								"available"
+							]
+						},
+						"description": "Get a list of all available scooters"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Scooters by Station",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{authToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/scooter-service/api/scooters/station/{{stationId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"scooter-service",
+								"api",
+								"scooters",
+								"station",
+								"{{stationId}}"
+							]
+						},
+						"description": "Get all scooters at a specific station"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Scooter by ID",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{authToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/scooter-service/api/scooters/{{scooterId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"scooter-service",
+								"api",
+								"scooters",
+								"{{scooterId}}"
+							]
+						},
+						"description": "Get details of a specific scooter"
+					},
+					"response": []
+				}
+			],
+			"description": "Endpoints for scooter management"
+		},
+		{
+			"name": "Reservation Service",
+			"item": [
+				{
+					"name": "Create Reservation",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{authToken}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"userId\": \"{{userId}}\",\n    \"scooterId\": \"{{scooterId}}\",\n    \"startTime\": \"{{$isoTimestamp}}\",\n    \"estimatedDuration\": 60,\n    \"startStationId\": \"{{stationId}}\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/reservation-service/api/reservations",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"reservation-service",
+								"api",
+								"reservations"
+							]
+						},
+						"description": "Create a new scooter reservation"
+					},
+					"response": []
+				},
+				{
+					"name": "Get User Reservations",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{authToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/reservation-service/api/reservations/user/{{userId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"reservation-service",
+								"api",
+								"reservations",
+								"user",
+								"{{userId}}"
+							]
+						},
+						"description": "Get all reservations for a specific user"
+					},
+					"response": []
+				},
+				{
+					"name": "Complete Reservation",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{authToken}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"endTime\": \"{{$isoTimestamp}}\",\n    \"endStationId\": \"{{stationId}}\",\n    \"finalDistance\": 5.2,\n    \"status\": \"COMPLETED\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/reservation-service/api/reservations/{{reservationId}}/complete",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"reservation-service",
+								"api",
+								"reservations",
+								"{{reservationId}}",
+								"complete"
+							]
+						},
+						"description": "Complete an active reservation"
+					},
+					"response": []
+				}
+			],
+			"description": "Endpoints for reservation management"
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "baseUrl",
+			"value": "http://localhost:8080",
+			"type": "string"
+		},
+		{
+			"key": "userId",
+			"value": "YOUR_USER_ID",
+			"type": "string"
+		},
+		{
+			"key": "authToken",
+			"value": "YOUR_AUTH_TOKEN",
+			"type": "string"
+		},
+		{
+			"key": "stationId",
+			"value": "YOUR_STATION_ID",
+			"type": "string"
+		},
+		{
+			"key": "scooterId",
+			"value": "YOUR_SCOOTER_ID",
+			"type": "string"
+		},
+		{
+			"key": "reservationId",
+			"value": "YOUR_RESERVATION_ID",
+			"type": "string"
+		}
+	]
+}

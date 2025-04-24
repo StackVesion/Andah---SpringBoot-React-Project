@@ -1,0 +1,37 @@
+version: '3.8'
+
+services:
+  reclamation-service:
+    build: .
+    container_name: reclamation-service
+    restart: always
+    ports:
+      - "3001:3001"
+    environment:
+      - PORT=3001
+      - NODE_ENV=development
+      - MONGO_URI=mongodb://mongodb:27017/reclamation-service
+      - EUREKA_HOST=discovery-server
+      - EUREKA_PORT=8761
+    networks:
+      - andah-network
+    depends_on:
+      - mongodb
+
+  mongodb:
+    image: mongo:latest
+    container_name: mongodb-reclamation
+    restart: always
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-data:/data/db
+    networks:
+      - andah-network
+
+networks:
+  andah-network:
+    external: true
+
+volumes:
+  mongo-data:

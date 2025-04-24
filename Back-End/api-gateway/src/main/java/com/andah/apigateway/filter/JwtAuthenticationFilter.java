@@ -10,19 +10,24 @@ import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 
 import java.util.List;
+import java.util.regex.Pattern;
 
 @Component
 public class JwtAuthenticationFilter implements GlobalFilter, Ordered {
     
-    private final List<String> openPaths = List.of(
-        "/user-service/api/auth/login",
-        "/user-service/api/auth/register",
-        "/user-service/api/auth/refresh-token",
-        "/user-service/api/auth/check-user",
-        "/user-service/api/auth/login-alternative",
-        "/user-service/api/auth/hello",
-        "/actuator"
+    private final List<String> openApiPaths = List.of(
+        // User service authentication endpoints
+        "/api/auth/",
+        "/user-service/api/auth/",
+        // Reclamation public endpoints
+        "/api/reclamations/public/",
+        "/reclamation-service/api/reclamations/public/",
+        // Actuator endpoints
+        "/actuator/"
     );
+    
+    // Pattern for Swagger UI and API docs
+    private final Pattern swaggerPattern = Pattern.compile("^/(swagger-ui\\.html|swagger-ui/.*|v3/api-docs/.*)$");
 
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
@@ -36,7 +41,8 @@ public class JwtAuthenticationFilter implements GlobalFilter, Ordered {
         
         // Allow open paths without authentication
         final String path = request.getURI().getPath();
-        if (isOpenPath(path)) {
+        
+        if (isOpenPath(path) || swaggerPattern.matcher(path).matches()) {
             return chain.filter(exchange);
         }
         
@@ -45,7 +51,7 @@ public class JwtAuthenticationFilter implements GlobalFilter, Ordered {
     }
     
     private boolean isOpenPath(String path) {
-        return openPaths.stream().anyMatch(path::startsWith);
+        return openApiPaths.stream().anyMatch(path::startsWith);
     }
 
     @Override

@@ -67,34 +67,61 @@ public class AuthController {
             logger.info("Received login request for: {}", request.getEmail());
             return userRepository.findByEmail(request.getEmail())
                 .map(user -> {
+                    logger.info("User found: {} with encoded password: {}", user.getEmail(), user.getPassword());
+                    logger.info("Comparing with provided password: {}", request.getPassword());
+                    
                     if (passwordEncoder.matches(request.getPassword(), user.getPassword())) {
+                        logger.info("Password matched for user: {}", user.getEmail());
                         String token = jwtUtil.generateToken(user);
                         String refreshToken = jwtUtil.generateRefreshToken(user);
                         
-                        Map<String, Object> response = new HashMap<>();
-                        response.put("token", token);
-                        response.put("refreshToken", refreshToken);
-                        response.put("user", UserDto.builder()
+                        AuthResponse response = AuthResponse.builder()
+                            .token(token)
+                            .refreshToken(refreshToken)
+                            .userId(user.getId())
+                            .username(user.getEmail())
+                            .email(user.getEmail())
+                            .role(user.getRole().toString())
+                            .user(UserDto.builder()
                                 .id(user.getId())
                                 .email(user.getEmail())
                                 .firstName(user.getFirstName())
                                 .lastName(user.getLastName())
                                 .isVerified(user.isVerified())
                                 .role(user.getRole())
-                                .build());
+                                .build())
+                            .build();
+                        
+                        // Log the token for debugging
+                        logger.info("Generated token: {}", token);
                         
                         return ResponseEntity.ok(response);
                     } else {
+                        logger.error("Password doesn't match for user: {}", user.getEmail());
                         throw new BadCredentialsException("Invalid password");
                     }
                 })
-                .orElseThrow(() -> new BadCredentialsException("User not found with email: " + request.getEmail()));
-        } catch (Exception e) {
-            logger.error("Login failed: {}", e.getMessage(), e);
+                .orElseGet(() -> {
+                    logger.error("User not found with email: {}", request.getEmail());
+                    Map<String, Object> errorResponse = new HashMap<>();
+                    errorResponse.put("message", "Invalid credentials");
+                    errorResponse.put("timestamp", java.time.LocalDateTime.now().toString());
+                    errorResponse.put("debug", "User not found with email: " + request.getEmail());
+                    return ResponseEntity.status(401).body(errorResponse);
+                });
+        } catch (BadCredentialsException e) {
+            logger.error("Bad credentials: {}", e.getMessage());
             Map<String, Object> errorResponse = new HashMap<>();
             errorResponse.put("message", "Invalid credentials");
             errorResponse.put("timestamp", java.time.LocalDateTime.now().toString());
             return ResponseEntity.status(401).body(errorResponse);
+        } catch (Exception e) {
+            logger.error("Login failed with unexpected error: {}", e.getMessage(), e);
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("message", "Authentication failed");
+            errorResponse.put("error", e.getMessage());
+            errorResponse.put("timestamp", java.time.LocalDateTime.now().toString());
+            return ResponseEntity.status(500).body(errorResponse);
         }
     }
     

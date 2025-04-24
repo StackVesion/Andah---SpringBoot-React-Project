@@ -1,0 +1,6 @@
+# Add these properties to your existing application.properties
+app.jwt.secret=andahSecretKey123ForAllServices
+app.jwt.expiration=86400000
+
+# Make sure JWT token forwarding works
+spring.cloud.gateway.default-filters=TokenRelay

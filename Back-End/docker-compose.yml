@@ -51,6 +51,27 @@ services:
     networks:
       - andah-network
     <<: *common-dns
+    
+  # RabbitMQ Message Broker
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: rabbitmq
+    ports:
+      - "5672:5672"   # RabbitMQ main port
+      - "15672:15672" # RabbitMQ management UI
+    environment:
+      - RABBITMQ_DEFAULT_USER=andah
+      - RABBITMQ_DEFAULT_PASS=andah123
+    healthcheck:
+      test: ["CMD", "rabbitmqctl", "status"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    volumes:
+      - rabbitmq-data:/var/lib/rabbitmq
+    networks:
+      - andah-network
+    <<: *common-dns
 
   # API Gateway
   api-gateway:
@@ -140,6 +161,27 @@ services:
       retries: 5
     networks:
       - andah-network
+      
+  # MongoDB for Reclamation Service
+  mongodb-reclamation-db:
+    image: mongo:6.0
+    container_name: mongodb-reclamation-db
+    environment:
+      - MONGO_INITDB_DATABASE=andah_reclamations
+      - MONGO_INITDB_ROOT_USERNAME=mongodb
+      - MONGO_INITDB_ROOT_PASSWORD=mongodb
+    ports:
+      - "27018:27017"
+    command: mongod --bind_ip_all --auth
+    volumes:
+      - mongodb-reclamation-data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')", "--quiet"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    networks:
+      - andah-network
 
   # ======= BUSINESS SERVICES =======
 
@@ -156,6 +198,8 @@ services:
         condition: service_healthy
       config-server:
         condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
     environment:
       - SPRING_PROFILES_ACTIVE=default
       - SPRING_CONFIG_IMPORT=optional:configserver:http://config-server:8888
@@ -166,6 +210,11 @@ services:
       - SPRING_DATA_MONGODB_USERNAME=mongodb
       - SPRING_DATA_MONGODB_PASSWORD=mongodb
       - SPRING_DATA_MONGODB_AUTHENTICATION_DATABASE=admin
+      # RabbitMQ connection
+      - SPRING_RABBITMQ_HOST=rabbitmq
+      - SPRING_RABBITMQ_PORT=5672
+      - SPRING_RABBITMQ_USERNAME=andah
+      - SPRING_RABBITMQ_PASSWORD=andah123
     healthcheck:
       test: "curl --fail --silent localhost:8083/actuator/health | grep UP || exit 1"
       interval: 10s
@@ -312,6 +361,40 @@ services:
     networks:
       - andah-network
     <<: *common-dns
+    
+  # Reclamation Service (Node.js)
+  reclamation-service:
+    build: ./reclamation-service
+    container_name: reclamation-service
+    ports:
+      - "3001:3001"
+    depends_on:
+      eureka-server:
+        condition: service_healthy
+      mongodb-reclamation-db:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    environment:
+      - PORT=3001
+      - NODE_ENV=development
+      - MONGO_URI=mongodb://mongodb:mongodb@mongodb-reclamation-db:27017/andah_reclamations?authSource=admin
+      - EUREKA_HOST=eureka-server
+      - EUREKA_PORT=8761
+      # RabbitMQ connection
+      - RABBITMQ_HOST=rabbitmq
+      - RABBITMQ_PORT=5672
+      - RABBITMQ_USER=andah
+      - RABBITMQ_PASSWORD=andah123
+      - RABBITMQ_VHOST=/
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    networks:
+      - andah-network
+    <<: *common-dns
 
 networks:
   andah-network:
@@ -321,3 +404,5 @@ volumes:
   postgres-data:
   mysql-data:
   mongodb-payment-data:
+  mongodb-reclamation-data:
+  rabbitmq-data:
