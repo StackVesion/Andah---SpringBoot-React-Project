@@ -1,112 +1,92 @@
-<!-- Sign In-->
+<!-- Start: Page content START -->
 <div class="auth-content my-auto">
+  <!-- Title -->
   <div class="text-center">
-    <h5 class="mb-0">Welcome Back !</h5>
-    <p class="text-muted mt-2">Sign in to continue to Andah.</p>
+    <h5 class="mb-0">Welcome Back!</h5>
+    <p class="text-muted mt-2">Sign in to continue to Andah</p>
   </div>
-  <form class="needs-validation mt-4 pt-2" [formGroup]="loginForm" (ngSubmit)="onSubmit()" novalidate>
+
+  <!-- Alert messages -->
+  <div *ngIf="errorMessage" class="alert alert-danger mt-3">
+    <i class="fas fa-exclamation-circle me-2"></i> {{ errorMessage }}
+  </div>
+
+  <div *ngIf="loginSuccess" class="alert alert-success mt-3">
+    <i class="fas fa-check-circle me-2"></i> Login successful! Redirecting to home page...
+  </div>
+
+  <div *ngIf="apiDebugInfo" class="alert alert-info mt-3 small">
+    <strong>Debug Info:</strong>
+    <pre style="white-space: pre-wrap;">{{ apiDebugInfo }}</pre>
+  </div>
+
+  <!-- Form START -->
+  <form 
+    [formGroup]="loginForm" 
+    (ngSubmit)="$event.preventDefault(); onSubmit()" 
+    (keydown.enter)="$event.preventDefault()"
+    class="mt-4 text-start">
+    
+    <!-- Email -->
     <div class="mb-3">
       <label class="form-label">Email</label>
-      <input
-        type="text"
-        class="form-control"
-        id="username"
-        placeholder="Enter email"
+      <input 
+        type="email" 
+        class="form-control" 
         formControlName="email"
         [ngClass]="{ 'is-invalid': submitted && form['email'].errors }"
       />
-      @if (submitted && form['email'].errors) {
-        <div class="invalid-feedback">
-          @if (form['email'].errors['required']) {
-            <div>Email is required</div>
-          }
-          @if (form['email'].errors['email']) {
-            <div>Email must be a valid email address</div>
-          }
-        </div>
-      }
+      <div *ngIf="submitted && form['email'].errors" class="invalid-feedback">
+        <div *ngIf="form['email'].errors['required']">Email is required</div>
+        <div *ngIf="form['email'].errors['email']">Invalid email format</div>
+      </div>
     </div>
 
+    <!-- Password -->
     <div class="mb-3">
-      <div class="d-flex align-items-start">
-        <div class="flex-grow-1">
-          <label class="form-label">Password</label>
-        </div>
-        <div class="flex-shrink-0">
-          <div class="">
-            <a routerLink="/auth/forgot-password" class="text-muted">Forgot password?</a>
-          </div>
-        </div>
-      </div>
-
-      <div class="input-group auth-pass-inputgroup">
+      <label class="form-label">Password</label>
+      <div class="input-group">
         <input
           [type]="fieldTextType ? 'text' : 'password'"
           class="form-control"
           formControlName="password"
-          placeholder="Enter password"
-          aria-label="Password"
-          aria-describedby="password-addon"
           [ngClass]="{ 'is-invalid': submitted && form['password'].errors }"
         />
-        <button
-          class="btn btn-light ms-0"
-          type="button"
-          id="password-addon"
-          (click)="changetype()"
-        >
-          <i class="mdi mdi-eye-outline" *ngIf="!fieldTextType"></i>
-          <i class="mdi mdi-eye-off-outline" *ngIf="fieldTextType"></i>
+        <button class="btn btn-light" type="button" (click)="changetype()">
+          <i class="fa" [ngClass]="{'fa-eye': fieldTextType, 'fa-eye-slash': !fieldTextType}"></i>
         </button>
-        @if (submitted && form['password'].errors) {
-          <div class="invalid-feedback">
-            @if (form['password'].errors['required']) {
-              <div>Password is required</div>
-            }
-          </div>
-        }
+        <div *ngIf="submitted && form['password'].errors" class="invalid-feedback">
+          <div *ngIf="form['password'].errors['required']">Password is required</div>
+        </div>
       </div>
     </div>
 
-    <div class="mb-3">
-      <button [disabled]="isLoading" class="btn btn-primary w-100 waves-effect waves-light" type="submit">
-        @if (isLoading) {
-          <span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
-          Logging in...
-        } @else {
-          Log In
-        }
+    <!-- Remember Me & Forgot Password -->
+    <div class="d-flex justify-content-between mb-4">
+      <div class="form-check">
+        <input type="checkbox" class="form-check-input" id="remember-me" formControlName="remember">
+        <label class="form-check-label" for="remember-me">Remember me</label>
+      </div>
+      <a routerLink="/auth/forgot-password" class="text-primary">Forgot password?</a>
+    </div>
+
+    <!-- Submit button -->
+    <div class="mb-4">
+      <button 
+        class="btn btn-primary w-100" 
+        type="button"
+        [disabled]="isLoading"
+        (click)="$event.preventDefault(); onSubmit()">
+        <span *ngIf="isLoading" class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+        {{ isLoading ? 'Signing in...' : 'Sign In' }}
       </button>
     </div>
   </form>
+  <!-- Form END -->
 
-  <!-- Display success message -->
-  @if (loginSuccess) {
-    <div class="alert alert-success mt-3">
-      <i class="fas fa-check-circle me-2"></i> Login successful! Redirecting to home page...
-    </div>
-  }
-  
-  <!-- Display debug info in development -->
-  @if (debugInfo) {
-    <div class="alert alert-info mt-3 small">
-      <strong>Debug Info:</strong>
-      <pre style="white-space: pre-wrap;">{{ debugInfo }}</pre>
-    </div>
-  }
-  
-  <!-- Display error message if any -->
-  @if (errorMessage) {
-    <div class="alert alert-danger mt-3">
-      {{ errorMessage }}
-    </div>
-  }
-
-  <div class="mt-5 text-center">
-    <p class="text-muted mb-0">
-      Don't have an account ?
-      <a routerLink="/auth/sign-up" class="text-primary fw-semibold"> Signup now </a>
-    </p>
+  <!-- Sign up link -->
+  <div class="text-center">
+    <p class="mb-0">Don't have an account? <a routerLink="/auth/sign-up" class="text-primary fw-bold ms-1">Sign up</a></p>
   </div>
 </div>
-<!-- end -->
+<!-- End: Page content END -->
