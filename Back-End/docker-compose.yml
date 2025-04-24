@@ -135,7 +135,7 @@ services:
     volumes:
       - mongodb-payment-data:/data/db
     healthcheck:
-      test: ["CMD", "mongo", "--eval", "db.adminCommand('ping')"]
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')", "--quiet"]
       interval: 30s
       timeout: 10s
       retries: 5
