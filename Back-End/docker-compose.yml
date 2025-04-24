@@ -39,7 +39,7 @@ services:
       eureka-server:
         condition: service_healthy
     environment:
-      - SPRING_PROFILES_ACTIVE=docker
+      - SPRING_PROFILES_ACTIVE=docker,native
       - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
     volumes:
       - ./config-repo:/config-repo
@@ -146,37 +146,36 @@ services:
 
   # User Service
   user-service:
-    build: ./user-service
-    container_name: user-service
+    build:
+      context: user-service
     ports:
       - "8083:8083"
     depends_on:
-      eureka-server:
-        condition: service_healthy
       postgres-db:
         condition: service_healthy
+      mongodb-payment-db:
+        condition: service_healthy
+      config-server:
+        condition: service_healthy
     environment:
-      - SPRING_PROFILES_ACTIVE=docker
+      - SPRING_PROFILES_ACTIVE=default
+      - SPRING_CONFIG_IMPORT=optional:configserver:http://config-server:8888
       - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
-      # Enable Eureka client features
-      - EUREKA_CLIENT_REGISTER-WITH-EUREKA=true
-      - EUREKA_CLIENT_FETCH-REGISTRY=true
-      # PostgreSQL connection
-      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres-db:5432/postgres
-      - SPRING_DATASOURCE_USERNAME=postgres
-      - SPRING_DATASOURCE_PASSWORD=postgres
-      # Ensure instance is properly registered
-      - EUREKA_INSTANCE_PREFER-IP-ADDRESS=true
-      - EUREKA_INSTANCE_INSTANCE-ID=$${spring.application.name}:$${server.port}
+      - SPRING_DATA_MONGODB_HOST=mongodb-payment-db
+      - SPRING_DATA_MONGODB_PORT=27017
+      - SPRING_DATA_MONGODB_DATABASE=andah_payments
+      - SPRING_DATA_MONGODB_USERNAME=mongodb
+      - SPRING_DATA_MONGODB_PASSWORD=mongodb
+      - SPRING_DATA_MONGODB_AUTHENTICATION_DATABASE=admin
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8083/actuator/health"]
-      interval: 30s
-      timeout: 10s
+      test: "curl --fail --silent localhost:8083/actuator/health | grep UP || exit 1"
+      interval: 10s
+      timeout: 5s
       retries: 5
+      start_period: 40s
     networks:
       - andah-network
-    <<: *common-dns
-  
+
   # Station Service
   station-service:
     build: ./station-service
