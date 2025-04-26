@@ -26,25 +26,19 @@ public class SecurityConfig {
     
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        System.out.println("Configuring security filter chain...");
+        System.out.println("Configuring security filter chain to permit all requests...");
         http
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
             .csrf(csrf -> csrf.disable())
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/api/auth/**").permitAll() // Public auth endpoints
-                .requestMatchers("/actuator/**").permitAll() // Actuator endpoints for monitoring
-                .anyRequest().authenticated() // All other requests require authentication
+                // Make all endpoints public for development/testing
+                .anyRequest().permitAll()
             )
             .sessionManagement(session -> session
                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
             )
-            .oauth2ResourceServer(oauth2 -> oauth2
-                .jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthenticationConverter()))
-            )
-            .exceptionHandling(exceptions -> exceptions
-                .authenticationEntryPoint(new BearerTokenAuthenticationEntryPoint())
-                .accessDeniedHandler(accessDeniedHandler())
-            );
+            // Disable JWT authentication for testing
+            .oauth2ResourceServer(oauth2 -> oauth2.disable());
             
         return http.build();
     }
