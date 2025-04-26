@@ -3,9 +3,11 @@ package com.andah.scooterservice.config;
 import feign.RequestInterceptor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
+
+import javax.servlet.http.HttpServletRequest;
+import java.util.Objects;
 
 @Configuration
 public class FeignClientConfig {
@@ -13,15 +15,21 @@ public class FeignClientConfig {
     @Bean
     public RequestInterceptor bearerTokenRequestInterceptor() {
         return requestTemplate -> {
-            // Get the security context from the thread that's making the request
-            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-            if (authentication != null && authentication.getCredentials() instanceof Jwt) {
-                Jwt jwt = (Jwt) authentication.getCredentials();
-                // Add the bearer token to the request
-                requestTemplate.header("Authorization", "Bearer " + jwt.getTokenValue());
-            } else if (authentication != null && authentication.getPrincipal() != null) {
-                // Fallback for other authentication types
-                requestTemplate.header("X-User-Id", authentication.getName());
+            try {
+                // Get the current request context
+                ServletRequestAttributes requestAttributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
+                if (requestAttributes != null) {
+                    HttpServletRequest request = requestAttributes.getRequest();
+                    // Get Authorization header from the current request
+                    String authHeader = request.getHeader("Authorization");
+                    if (authHeader != null && !authHeader.isEmpty()) {
+                        // Add the authorization header to the Feign request
+                        requestTemplate.header("Authorization", authHeader);
+                    }
+                }
+            } catch (Exception e) {
+                // Just log the error, don't break the request
+                System.out.println("Error forwarding Authorization header: " + e.getMessage());
             }
         };
     }
