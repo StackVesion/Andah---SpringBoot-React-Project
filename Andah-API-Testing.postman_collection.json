@@ -1,0 +1,440 @@
+{
+	"info": {
+		"_postman_id": "b36d7ea8-c19c-4a02-8c5a-29c11dd9c5e4",
+		"name": "Andah API Testing",
+		"description": "A collection for testing all Andah microservices through the API Gateway without authentication requirements.",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Gateway Test",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:8080/api/test",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"api",
+						"test"
+					]
+				},
+				"description": "Test if the API Gateway is working"
+			},
+			"response": []
+		},
+		{
+			"name": "Auth & User Service",
+			"item": [
+				{
+					"name": "Login",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// Parse response",
+									"var jsonData = JSON.parse(responseBody);",
+									"",
+									"// Check for token",
+									"if (jsonData.token) {",
+									"    // Save token to environment",
+									"    pm.environment.set(\"authToken\", jsonData.token);",
+									"    // Save user ID to environment",
+									"    pm.environment.set(\"userId\", jsonData.userId);",
+									"    console.log(\"Token saved!\");",
+									"} else {",
+									"    console.log(\"No token found in response\");",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"nihed@gmail.com\",\n    \"password\": \"password123\"\n}"
+						},
+						"url": {
+							"raw": "http://localhost:8080/api/auth/login",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"api",
+								"auth",
+								"login"
+							]
+						},
+						"description": "Login to get authentication token"
+					},
+					"response": []
+				},
+				{
+					"name": "Register",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"test_user@example.com\",\n    \"password\": \"password123\",\n    \"firstName\": \"Test\",\n    \"lastName\": \"User\",\n    \"role\": \"USER\"\n}"
+						},
+						"url": {
+							"raw": "http://localhost:8080/api/auth/register",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"api",
+								"auth",
+								"register"
+							]
+						},
+						"description": "Register a new user"
+					},
+					"response": []
+				},
+				{
+					"name": "Get All Users",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8080/api/users",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"api",
+								"users"
+							]
+						},
+						"description": "Get all users"
+					},
+					"response": []
+				},
+				{
+					"name": "Get User By ID",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8080/api/users/{{userId}}",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"api",
+								"users",
+								"{{userId}}"
+							]
+						},
+						"description": "Get user by ID"
+					},
+					"response": []
+				}
+			],
+			"description": "User authentication and management endpoints"
+		},
+		{
+			"name": "Station Service",
+			"item": [
+				{
+					"name": "Get All Stations",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8080/api/stations",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"api",
+								"stations"
+							]
+						},
+						"description": "Get all stations"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Station By ID",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8080/api/stations/1",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"api",
+								"stations",
+								"1"
+							]
+						},
+						"description": "Get station by ID"
+					},
+					"response": []
+				}
+			],
+			"description": "Station service endpoints"
+		},
+		{
+			"name": "Reservation Service",
+			"item": [
+				{
+					"name": "Get All Reservations",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8080/api/reservations",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"api",
+								"reservations"
+							]
+						},
+						"description": "Get all reservations"
+					},
+					"response": []
+				},
+				{
+					"name": "Get User Reservations",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8080/api/reservations/user/{{userId}}",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"api",
+								"reservations",
+								"user",
+								"{{userId}}"
+							]
+						},
+						"description": "Get reservations by user ID"
+					},
+					"response": []
+				}
+			],
+			"description": "Reservation service endpoints"
+		},
+		{
+			"name": "Payment Service",
+			"item": [
+				{
+					"name": "Get All Wallets",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8080/api/wallets",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"api",
+								"wallets"
+							]
+						},
+						"description": "Get all wallets"
+					},
+					"response": []
+				},
+				{
+					"name": "Get User Wallet",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8080/api/wallets/user/{{userId}}",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"api",
+								"wallets",
+								"user",
+								"{{userId}}"
+							]
+						},
+						"description": "Get wallet by user ID"
+					},
+					"response": []
+				}
+			],
+			"description": "Payment service endpoints"
+		},
+		{
+			"name": "Scooter Service",
+			"item": [
+				{
+					"name": "Get All Scooters",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8080/api/scooters",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"api",
+								"scooters"
+							]
+						},
+						"description": "Get all scooters"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Scooter By ID",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8080/api/scooters/1",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"api",
+								"scooters",
+								"1"
+							]
+						},
+						"description": "Get scooter by ID"
+					},
+					"response": []
+				}
+			],
+			"description": "Scooter service endpoints"
+		},
+		{
+			"name": "Reclamation Service",
+			"item": [
+				{
+					"name": "Get All Reclamations",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8080/api/reclamations",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"api",
+								"reclamations"
+							]
+						},
+						"description": "Get all reclamations"
+					},
+					"response": []
+				},
+				{
+					"name": "Get User Reclamations",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8080/api/reclamations/user/{{userId}}",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"api",
+								"reclamations",
+								"user",
+								"{{userId}}"
+							]
+						},
+						"description": "Get reclamations by user ID"
+					},
+					"response": []
+				}
+			],
+			"description": "Reclamation service endpoints"
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "baseUrl",
+			"value": "http://localhost:8080",
+			"type": "string"
+		}
+	]
+}

@@ -21,6 +21,9 @@ import { HTTP_INTERCEPTORS, provideHttpClient, withFetch, withInterceptorsFromDi
 import { FakeBackendProvider } from './helpers/fake-backend'
 import { JwtInterceptor } from './helpers/jwt.interceptor'
 import { ErrorInterceptor } from './helpers/error.interceptor'
+import { createRequire } from 'module';
+
+const require = createRequire(import.meta.url);
 
 // Scroll
 const scrollConfig: InMemoryScrollingOptions = {
